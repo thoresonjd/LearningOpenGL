@@ -8,14 +8,8 @@ const int OPENGL_VERSION_MAJOR = 3;
 const int OPENGL_VERSION_MINOR = 3;
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
-const std::string WINDOW_NAME = "LearnOpenGL";
-const float R = 0.5, G = 0.5, B = 0.5, A = 1.0;
-
-/**
- * Process keyboard input
- * @param window - a GLFW window object
- */
-void processInput(GLFWwindow* window);
+const std::string WINDOW_NAME = "Hello, window!";
+const float R = 0.2f, G = 0.3f, B = 0.3f, A = 1.0f;
 
 /**
  * Handle window resizing
@@ -24,6 +18,12 @@ void processInput(GLFWwindow* window);
  * @param height - new height of resize
  */
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
+
+/**
+ * Process keyboard input
+ * @param window - a GLFW window object
+ */
+void processInput(GLFWwindow* window);
 
 int main(void) {
 
@@ -71,11 +71,11 @@ int main(void) {
 	return EXIT_SUCCESS;
 }
 
+void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
+	glViewport(0, 0, width, height);
+}
+
 void processInput(GLFWwindow* window) {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
-}
-
-void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
-	glViewport(0, 0, width, height);
 }
