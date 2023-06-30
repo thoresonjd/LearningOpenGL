@@ -135,7 +135,7 @@ int main(void) {
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		// draw triangle
+		// draw triangles
 		glUseProgram(shaderProgram);
 		glBindVertexArray(vao);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -143,6 +143,13 @@ int main(void) {
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
+
+	// optionally deallocate all resources
+	glDeleteVertexArrays(1, &vao);
+	glDeleteBuffers(1, &vbo);
+	glDeleteBuffers(1, &ebo);
+	glDeleteProgram(shaderProgram);
+
 	glfwTerminate();
 	return EXIT_SUCCESS;
 }
