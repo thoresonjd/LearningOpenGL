@@ -1,3 +1,10 @@
+/**
+ * @file hello_triangle_indexed.cpp
+ * @brief Rendering a triangle with indices
+ * @date June 2023
+ * @see https://learnopengl.com/Getting-started/Hello-Triangle
+ */
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
@@ -20,7 +27,7 @@ const int OPENGL_VERSION_MAJOR = 3;
 const int OPENGL_VERSION_MINOR = 3;
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
-const char* WINDOW_NAME = "Hello, rectangle!";
+const char* WINDOW_NAME = "Hello, triangle!";
 
 const char* vertexShaderSource = R"(
 	#version 330 core
@@ -79,7 +86,7 @@ int main(void) {
 		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
 	}
 
-	// link shaders create shader program
+	// link shaders and create shader program
 	unsigned int shaderProgram = glCreateProgram();
 	glAttachShader(shaderProgram, vertexShader);
 	glAttachShader(shaderProgram, fragmentShader);
@@ -92,13 +99,6 @@ int main(void) {
 	glDeleteShader(vertexShader);
 	glDeleteShader(fragmentShader);
 
-	// create vertex buffer object, vertex array object, element buffer object
-	unsigned int vbo, vao, ebo;
-	glGenVertexArrays(1, &vao);
-	glGenBuffers(1, &vbo);
-	glGenBuffers(1, &ebo);
-	glBindVertexArray(vao);
-
 	// establist vertices and indices
 	float vertices[] = {
 		0.5f, 0.5f, 0.0f,   // top right
@@ -110,6 +110,13 @@ int main(void) {
 		0, 1, 3, // first triangle
 		1, 2, 3  // second triangle
 	};
+
+	// create vertex buffer object, vertex array object, element buffer object
+	unsigned int vbo, vao, ebo;
+	glGenVertexArrays(1, &vao);
+	glGenBuffers(1, &vbo);
+	glGenBuffers(1, &ebo);
+	glBindVertexArray(vao);
 
 	// copy vertices array into buffer
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);

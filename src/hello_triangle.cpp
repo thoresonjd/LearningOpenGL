@@ -1,3 +1,10 @@
+/**
+ * @file hello_triangle.cpp
+ * @brief Rendering a triangle
+ * @date June 2023
+ * @see https://learnopengl.com/Getting-started/Hello-Triangle
+ */
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
@@ -79,7 +86,7 @@ int main(void) {
 		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
 	}
 
-	// link shaders create shader program
+	// link shaders and create shader program
 	unsigned int shaderProgram = glCreateProgram();
 	glAttachShader(shaderProgram, vertexShader);
 	glAttachShader(shaderProgram, fragmentShader);
@@ -92,18 +99,18 @@ int main(void) {
 	glDeleteShader(vertexShader);
 	glDeleteShader(fragmentShader);
 
-	// create vertex buffer object and vertex array object
-	unsigned int vbo, vao;
-	glGenVertexArrays(1, &vao);
-	glGenBuffers(1, &vbo);
-	glBindVertexArray(vao);
-
 	// establist vertices
 	float vertices[] = {
 		-0.5f, -0.5f, 0.0f,
 		0.5f, -0.5f, 0.0f,
 		0.0f, 0.5f, 0.0f
 	};
+
+	// create vertex buffer object and vertex array object
+	unsigned int vbo, vao;
+	glGenVertexArrays(1, &vao);
+	glGenBuffers(1, &vbo);
+	glBindVertexArray(vao);
 
 	// copy vertices array into buffer
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -130,6 +137,12 @@ int main(void) {
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
+
+	// optionally deallocate all resources
+	glDeleteVertexArrays(1, &vao);
+	glDeleteBuffers(1, &vbo);
+	glDeleteProgram(shaderProgram);
+
 	glfwTerminate();
 	return EXIT_SUCCESS;
 }

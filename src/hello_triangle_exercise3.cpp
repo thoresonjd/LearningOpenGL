@@ -1,3 +1,10 @@
+/**
+ * @file hello_triangle_exercise3.cpp
+ * @brief Rendering two triangles of different colors via different fragment shaders
+ * @date June 2023
+ * @see https://learnopengl.com/Getting-started/Hello-Triangle
+ */
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>

@@ -1,3 +1,10 @@
+/**
+ * @file hello_window.cpp
+ * @brief Creating a window
+ * @date June 2023
+ * @see https://learnopengl.com/Getting-started/Hello-Window
+ */
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <string>

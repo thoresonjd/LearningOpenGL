@@ -1,3 +1,10 @@
+/**
+ * @file hello_triangle_exercise2.cpp
+ * @brief Rendering two triangles with different VBOs and VAOs
+ * @date June 2023
+ * @see https://learnopengl.com/Getting-started/Hello-Triangle
+ */
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
@@ -79,7 +86,7 @@ int main(void) {
 		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
 	}
 
-	// link shaders create shader program
+	// link shaders and create shader program
 	unsigned int shaderProgram = glCreateProgram();
 	glAttachShader(shaderProgram, vertexShader);
 	glAttachShader(shaderProgram, fragmentShader);

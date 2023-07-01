@@ -1,3 +1,10 @@
+/**
+ * @file hello_triangle_exercise1.cpp
+ * @brief Rendering two triangles
+ * @date June 2023
+ * @see https://learnopengl.com/Getting-started/Hello-Triangle
+ */
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
@@ -79,7 +86,7 @@ int main(void) {
 		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
 	}
 
-	// link shaders create shader program
+	// link shaders and create shader program
 	unsigned int shaderProgram = glCreateProgram();
 	glAttachShader(shaderProgram, vertexShader);
 	glAttachShader(shaderProgram, fragmentShader);
@@ -92,12 +99,6 @@ int main(void) {
 	glDeleteShader(vertexShader);
 	glDeleteShader(fragmentShader);
 
-	// create vertex buffer object and vertex array object
-	unsigned int vbo, vao;
-	glGenVertexArrays(1, &vao);
-	glGenBuffers(1, &vbo);
-	glBindVertexArray(vao);
-
 	// establist vertices
 	float vertices[] = {
 		// first triangle
@@ -109,6 +110,12 @@ int main(void) {
 		0.25f, -0.25f, 0.0f,
 		0.0f, 0.25f, 0.0f
 	};
+
+	// create vertex buffer object and vertex array object
+	unsigned int vbo, vao;
+	glGenVertexArrays(1, &vao);
+	glGenBuffers(1, &vbo);
+	glBindVertexArray(vao);
 
 	// copy vertices array into buffer
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -123,7 +130,7 @@ int main(void) {
 	glBindVertexArray(0);
 
 	// render in wireframe mode
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	while (!glfwWindowShouldClose(window)) {
 		processInput(window);
