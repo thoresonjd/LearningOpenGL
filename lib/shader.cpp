@@ -5,7 +5,7 @@
  * @see https://learnopengl.com/Getting-started/Shaders
  */
 
-#include "shader.h"
+#include <learnopengl/shader.h>
 
 Shader::Shader(const std::string& vertexPath, const std::string& fragmentPath) {
 	// retrieve vertex and fragment shader source code from file path

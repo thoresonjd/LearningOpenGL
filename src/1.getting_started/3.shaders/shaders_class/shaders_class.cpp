@@ -9,7 +9,7 @@
 #include <GLFW/glfw3.h>
 #include <string>
 #include <iostream>
-#include "shader.h"
+#include <learnopengl/shader.h>
 
  /**
   * Handle window resizing
@@ -31,8 +31,8 @@ const int OPENGL_VERSION_MINOR = 3;
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
 const char* WINDOW_NAME = "Shaders: shader class";
-const std::string V_SHADER_PATH = "vertex.shader";
-const std::string F_SHADER_PATH = "fragment.shader";
+const std::string V_SHADER_PATH = "src/1.getting_started/3.shaders/shaders_class/vertex.shader";
+const std::string F_SHADER_PATH = "src/1.getting_started/3.shaders/shaders_class/fragment.shader";
 
 int main(void) {
 	// initialize GLFW and create window
