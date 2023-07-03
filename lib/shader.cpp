@@ -63,13 +63,11 @@ Shader::Shader(const std::string& vertexPath, const std::string& fragmentPath) {
 	glDeleteShader(fragment);
 }
 
-Shader::~Shader() {
-	glDeleteProgram(id);
-}
+Shader::~Shader() { glDeleteProgram(id); }
 
-void Shader::use() {
-	glUseProgram(id);
-}
+void Shader::use() { glUseProgram(id); }
+
+unsigned int Shader::getID() { return id; }
 
 void Shader::setBool(const std::string& name, bool value) const {
 	glUniform1i(glGetUniformLocation(id, name.c_str()), (int)value);
