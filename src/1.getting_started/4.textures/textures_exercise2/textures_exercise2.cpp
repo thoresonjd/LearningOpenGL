@@ -9,7 +9,7 @@
 #include <GLFW/glfw3.h>
 #include <string>
 #include <iostream>
-#include <learnopengl/shader.h>
+#include <learnopengl/shader_s.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
@@ -33,8 +33,8 @@ const int OPENGL_VERSION_MINOR = 3;
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
 const char* WINDOW_NAME = "Textures: exercise2";
-const std::string V_SHADER_PATH = "src/1.getting_started/4.textures/textures_exercise2/vertex.shader";
-const std::string F_SHADER_PATH = "src/1.getting_started/4.textures/textures_exercise2/fragment.shader";
+const char* V_SHADER_PATH = "src/1.getting_started/4.textures/textures_exercise2/vertex.shader";
+const char* F_SHADER_PATH = "src/1.getting_started/4.textures/textures_exercise2/fragment.shader";
 const char* CONTAINER_TEX = "assets/textures/container.jpg";
 const char* AWESOME_FACE_TEX = "assets/textures/awesomeface.png";
 
@@ -102,7 +102,6 @@ int main(void) {
 	// texture attribute
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
 	glEnableVertexAttribArray(2);
-
 
 	// load and generate container texture
 	unsigned int texture1, texture2;

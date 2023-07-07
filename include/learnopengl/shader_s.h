@@ -1,5 +1,5 @@
 /**
- * @file shader.h
+ * @file shader_s.h
  * @brief Shader class
  * @date July 2023
  * @see https://learnopengl.com/Getting-started/Shaders
@@ -15,7 +15,7 @@
 
 class Shader {
 public:
-	Shader(const std::string& vertexPath, const std::string& fragmentPath);
+	Shader(const char* vertexPath, const char* fragmentPath);
 	~Shader();
 	void use();
 	unsigned int getID();

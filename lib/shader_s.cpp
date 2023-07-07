@@ -1,13 +1,13 @@
 /**
- * @file shader.cpp
+ * @file shader_s.cpp
  * @brief Shader class implementation
  * @date July 2023
  * @see https://learnopengl.com/Getting-started/Shaders
  */
 
-#include <learnopengl/shader.h>
+#include <learnopengl/shader_s.h>
 
-Shader::Shader(const std::string& vertexPath, const std::string& fragmentPath) {
+Shader::Shader(const char* vertexPath, const char* fragmentPath) {
 	// retrieve vertex and fragment shader source code from file path
 	std::string vertexCode, fragmentCode;
 	std::ifstream vShaderFile, fShaderFile;
