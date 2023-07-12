@@ -71,7 +71,7 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 // lighting
-glm::vec3 lightPos(1.0f, 1.0f, 1.0f);//(1.2f, 1.0f, 2.0f);
+glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 
 int main(void) {
 	// initialize GLFW and create window
@@ -195,14 +195,6 @@ int main(void) {
 
 		// set uniforms for colors
 		cubeShader.use();
-		float angle = deltaTime * glm::radians(180.0f);
-		// transform the light
-		glm::mat4 lightTransform = glm::mat4(1.0f);
-		lightTransform = glm::rotate(lightTransform, angle, glm::vec3(1.0, 0.0, -1.0f));
-		glm::vec4 lightPosV4 = lightTransform * glm::vec4(lightPos, 1.0f);
-		lightPos.x = lightPosV4.x;
-		lightPos.y = lightPosV4.y;
-		lightPos.z = lightPosV4.z;
 		cubeShader.setVec3("lightPos", lightPos);
 		glm::vec3 objectColor(1.0f, 0.5f, 0.31f);
 		glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
