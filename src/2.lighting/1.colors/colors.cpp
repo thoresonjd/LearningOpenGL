@@ -235,15 +235,17 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
 }
 
 void mouseCallback(GLFWwindow* window, double xPos, double yPos) {
+	float xPosition = static_cast<float>(xPos);
+	float yPosition = static_cast<float>(yPos);
 	if (firstMouse) {
-		lastX = xPos;
-		lastY = yPos;
+		lastX = xPosition;
+		lastY = yPosition;
 		firstMouse = false;
 	}
-	float xOffset = xPos - lastX;
-	float yOffset = lastY - yPos; // reversed since y-coordinates range from top to bottom
-	lastX = xPos;
-	lastY = yPos;
+	float xOffset = xPosition - lastX;
+	float yOffset = lastY - yPosition; // reversed since y-coordinates range from top to bottom
+	lastX = xPosition;
+	lastY = yPosition;
 	camera.processMouseMovement(xOffset, yOffset);
 }
 
