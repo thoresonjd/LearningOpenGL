@@ -84,4 +84,6 @@ void Camera::updateCameraVectors() {
 	up = glm::normalize(glm::cross(right, front));
 }
 
+glm::vec3 Camera::getPosition() { return position; }
+
 float Camera::getFOV() { return zoom; }
