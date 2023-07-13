@@ -16,9 +16,6 @@
 // Custom libs
 #include <learnopengl/shader_m.h>
 #include <learnopengl/camera.h>
-// Image loading
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
 // C++ libs
 #include <iostream>
 

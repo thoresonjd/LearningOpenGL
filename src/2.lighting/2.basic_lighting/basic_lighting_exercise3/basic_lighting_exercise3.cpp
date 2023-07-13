@@ -14,10 +14,7 @@
 #include <glm/gtc/type_ptr.hpp>
 // Custom libs
 #include <learnopengl/shader_m.h>
-#include <learnopengl/camera.h>
-// Image loading
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
+#include <learnopengl/camera.h>]
 // C++ libs
 #include <iostream>
 
