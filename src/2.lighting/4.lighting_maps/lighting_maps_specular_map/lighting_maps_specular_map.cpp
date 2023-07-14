@@ -219,7 +219,6 @@ int main(void) {
 		cubeShader.use();
 		cubeShader.setVec3("viewPos", camera.getPosition());
 		// material colors for the cube object
-		cubeShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
 		cubeShader.setFloat("material.shininess", 64.0f);
 		// light properties: position and material influence the light has on the object
 		cubeShader.setVec3("light.position", lightPos);
