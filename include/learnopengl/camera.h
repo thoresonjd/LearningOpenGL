@@ -37,6 +37,7 @@ public:
 	void processMouseMovement(float xOffset, float yOffset, GLboolean constrainPitch = true);
 	void processMouseScroll(float yOffset);
 	glm::vec3 getPosition();
+	glm::vec3 getFront();
 	float getFOV();
 private:
 	// camera attributes
