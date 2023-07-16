@@ -13,7 +13,7 @@
 #include <vector>
 
 // abstraction to stay away from windowing system specific input methods
-enum CameraMovement {
+enum class CameraMovement {
 	FORWARD,
 	BACKWARD,
 	LEFT,
