@@ -59,8 +59,10 @@ const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
 const char* WINDOW_NAME = "Model loading";
 // shaders
-const char* VERT_SHADER = "src/3.model_loading/1.model_loading/model.vs";
-const char* FRAG_SHADER = "src/3.model_loading/1.model_loading/model.fs";
+const char* MODEL_VERT_SHADER = "src/3.model_loading/1.model_loading/model.vs";
+const char* MODEL_FRAG_SHADER = "src/3.model_loading/1.model_loading/model.fs";
+const char* LIGHT_VERT_SHADER = "src/3.model_loading/1.model_loading/light.vs";
+const char* LIGHT_FRAG_SHADER = "src/3.model_loading/1.model_loading/light.fs";
 // model
 const char* MODEL = "assets/models/backpack/backpack.obj";
 // camera
@@ -103,11 +105,52 @@ int main(void) {
 	// tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
 	stbi_set_flip_vertically_on_load(true);
 
-	// create shader program
-	Shader shader(VERT_SHADER, FRAG_SHADER);
-
 	// create model object
 	Model object(MODEL);
+	
+	// create shader programs
+	Shader objectShader(MODEL_VERT_SHADER, MODEL_FRAG_SHADER);
+	Shader lightShader(LIGHT_VERT_SHADER, LIGHT_FRAG_SHADER);
+
+	// create light source object
+	float vertices[] = {
+		0.5f, 0.5f, 0.5f,	 // 0: right top front
+		0.5f, 0.5f, -0.5f,   // 1: right top back
+		0.5f, -0.5f, 0.5f,   // 2: right bottom front
+		0.5f, -0.5f, -0.5f,  // 3: right bottom back
+		-0.5f, 0.5f, 0.5f,   // 4: left top front
+		-0.5f, 0.5f, -0.5f,  // 5: left top back
+		-0.5f, -0.5f, 0.5f,  // 6: left bottom front
+		-0.5f, -0.5f, -0.5f, // 7: left bottom back
+	};
+
+	unsigned int indices[] = {
+		0, 1, 4, // top
+		1, 4, 5,
+		1, 4, 6, // front
+		1, 2, 6,
+		1, 3, 5, // back
+		3, 5, 7,
+		2, 3, 6, // bottom
+		3, 6, 7,
+		0, 1, 2, // right
+		1, 2, 3,
+		4, 5, 6, // left
+		5, 6, 7
+	};
+
+	unsigned int lightVBO, lightVAO, lightEBO;
+	glGenVertexArrays(1, &lightVAO);
+	glGenBuffers(1, &lightVBO);
+	glGenBuffers(1, &lightEBO);
+	glBindVertexArray(lightVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, lightVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lightEBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glBindVertexArray(0);
 
 	// render loop
 	while (!glfwWindowShouldClose(window)) {
@@ -120,26 +163,50 @@ int main(void) {
 		processInput(window);
 
 		// set color
-		glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
 		// clear buffer bits so information does not overlap frames
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// enable shader
-		shader.use();
-
 		// view/projection transformations
-		glm::mat4 projection = glm::perspective(glm::radians(camera.getFOV()), (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, 0.1f, 100.0f);
 		glm::mat4 view = camera.getViewMatrix();
-		shader.setMat4("projection", projection);
-		shader.setMat4("view", view);
+		glm::mat4 projection = glm::perspective(glm::radians(camera.getFOV()), (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, 0.1f, 100.0f);
+
+		// render the light source
+		lightShader.use();
+		glm::mat4 model = glm::mat4(1.0f);
+		glm::vec3 lightPos(0.0f);
+		// full revolution around the model every four seconds
+		lightPos.x = 5.0f * sin(currentFrame * glm::radians(90.0f));
+		lightPos.z = 5.0f * cos(currentFrame * glm::radians(90.0f));
+		model = glm::translate(model, lightPos);
+		model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
+		lightShader.setMat4("model", model);
+		lightShader.setMat4("view", view);
+		lightShader.setMat4("projection", projection);
+		glBindVertexArray(lightVAO);
+		glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(float), GL_UNSIGNED_INT, 0);
+
+		// enable object shader, configure lighting, set transformation uniforms
+		objectShader.use();
+		objectShader.setVec3("viewPos", camera.getPosition());
+		objectShader.setFloat("material.shininess", 64.0f);
+		objectShader.setVec3("light.position", lightPos);
+		objectShader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
+		objectShader.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
+		objectShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+		objectShader.setFloat("light.constant", 1.0f);
+		objectShader.setFloat("light.linear", 0.09f);
+		objectShader.setFloat("light.quadratic", 0.032f);
+		objectShader.setMat4("view", view);
+		objectShader.setMat4("projection", projection);
 
 		// render the loaded model
-		glm::mat4 model = glm::mat4(1.0f);
+		model = glm::mat4(1.0f);
 		model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
 		model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
-		shader.setMat4("model", model);
-		object.draw(shader);
+		objectShader.setMat4("model", model);
+		object.draw(objectShader);
 
 		// swap buffers and poll events
 		glfwSwapBuffers(window);

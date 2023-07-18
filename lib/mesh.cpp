@@ -28,7 +28,7 @@ void Mesh::draw(Shader& shader) {
 			number = std::to_string(diffuseNr++);
 		else if (name == "texture_specular")
 			number = std::to_string(specularNr++);
-		shader.setInt((name + number).c_str(), i);
+		shader.setInt(("material." + (name + number)).c_str(), i);
 		glBindTexture(GL_TEXTURE_2D, textures[i].id);
 	}
 	glBindVertexArray(vao);
