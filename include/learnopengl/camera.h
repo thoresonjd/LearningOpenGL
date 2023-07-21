@@ -39,6 +39,8 @@ public:
 	glm::vec3 getPosition();
 	glm::vec3 getFront();
 	float getFOV();
+	float getYaw();
+	void setYaw(float yaw);
 private:
 	// camera attributes
 	glm::vec3 position;

@@ -14,7 +14,7 @@ Camera::Camera(
 	front(glm::vec3(0.0f, 0.0f, -1.0f)),
 	worldUp(up),
 	yaw(yaw),
-	pitch(pitch), 
+	pitch(pitch),
 	movementSpeed(SPEED),
 	mouseSensitivity(SENSITIVITY),
 	zoom(ZOOM) {
@@ -89,3 +89,7 @@ glm::vec3 Camera::getPosition() { return position; }
 glm::vec3 Camera::getFront() { return front; }
 
 float Camera::getFOV() { return zoom; }
+
+float Camera::getYaw() { return yaw; }
+
+void Camera::setYaw(float yaw) { this->yaw = yaw; }
