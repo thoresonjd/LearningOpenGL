@@ -1,6 +1,6 @@
 /**
  * @file framebuffers_exercise1.cpp
- * @brief Using a framebuffer to render a rear view mirror
+ * @brief Using a framebuffer to render a rear-view mirror
  * @date July 2023
  * @see https://learnopengl.com/Advanced-OpenGL/Framebuffers
  */
@@ -278,7 +278,7 @@ int main(void) {
 		processInput(window);
 
 		// first render pass: mirror
-		// note: rear view mirror only works along the x-axis (yaw)
+		// note: rear-view mirror only works along the x-axis (yaw)
 		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
