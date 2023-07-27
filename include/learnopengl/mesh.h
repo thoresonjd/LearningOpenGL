@@ -11,7 +11,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <vector>
-#include <learnopengl/shader_m.h>
+#include <learnopengl/shader_g.h>
 
 struct Vertex {
 	glm::vec3 position;

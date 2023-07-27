@@ -14,7 +14,7 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
-#include <learnopengl/shader_m.h>
+#include <learnopengl/shader_g.h>
 #include <learnopengl/mesh.h>
 #include <vector>
 #include <iostream>
