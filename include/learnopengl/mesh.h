@@ -33,6 +33,8 @@ public:
 	std::vector<Texture> textures;
 	Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures);
 	void draw(Shader& shader);
+	unsigned int getVAO();
+	unsigned int getNumIndices();
 private:
 	// render data
 	unsigned int vbo, vao, ebo;

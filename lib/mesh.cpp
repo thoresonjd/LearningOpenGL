@@ -38,6 +38,14 @@ void Mesh::draw(Shader& shader) {
 	glActiveTexture(GL_TEXTURE0);
 }
 
+unsigned int Mesh::getVAO() {
+	return vao;
+}
+
+unsigned int Mesh::getNumIndices() {
+	return indices.size();
+}
+
 void Mesh::setupMesh() {
 	glGenVertexArrays(1, &vao);
 	glGenBuffers(1, &vbo);
