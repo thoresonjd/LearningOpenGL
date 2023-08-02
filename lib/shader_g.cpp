@@ -8,7 +8,7 @@
 
  // compile shader program on the fly
 Shader::Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath) {
-	// retrieve vertex and fragment shader source code from file path
+	// retrieve shader code
 	std::string vertexCode, fragmentCode, geometryCode;
 	std::ifstream vShaderFile, fShaderFile, gShaderFile;
 	vShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
