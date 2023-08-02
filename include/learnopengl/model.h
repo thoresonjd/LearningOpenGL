@@ -23,6 +23,10 @@ class Model {
 public:
 	Model(const char* path);
 	void draw(Shader& shader);
+	unsigned int getNumMeshes();
+	unsigned int getMeshVAO(unsigned int meshIndex);
+	unsigned int getMeshNumIndices(unsigned int meshIndex);
+	unsigned int getTextureID(unsigned int textureIndex);
 private:
 	std::vector<Mesh> meshes;
 	std::vector<Texture> texturesLoaded;

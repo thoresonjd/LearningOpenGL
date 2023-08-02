@@ -16,6 +16,22 @@ void Model::draw(Shader& shader) {
 		meshes[i].draw(shader);
 }
 
+unsigned int Model::getNumMeshes() {
+	return meshes.size();
+}
+
+unsigned int Model::getMeshVAO(unsigned int meshIndex) {
+	return meshes[meshIndex].getVAO();
+}
+
+unsigned int Model::getMeshNumIndices(unsigned int meshIndex) {
+	return meshes[meshIndex].getNumIndices();
+}
+
+unsigned int Model::getTextureID(unsigned int textureIndex) {
+	return texturesLoaded[textureIndex].id;
+}
+
 void Model::loadModel(std::string path) {
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
@@ -87,7 +103,7 @@ std::vector<Texture> Model::loadMaterialTextures(aiMaterial* mat, aiTextureType 
 		mat->GetTexture(type, i, &str);
 		bool skip = false;
 		for (unsigned int j = 0; j < texturesLoaded.size(); j++) {
-			if (std::strcmp(texturesLoaded[j].path.data(), str.C_Str()) == 0) {
+			if (!std::strcmp(texturesLoaded[j].path.data(), str.C_Str())) {
 				textures.push_back(texturesLoaded[j]);
 				skip = true;
 				break;
