@@ -62,8 +62,9 @@ void processInput(GLFWwindow* window);
 // OpenGL configurations
 const int OPENGL_VERSION_MAJOR = 3;
 const int OPENGL_VERSION_MINOR = 3;
-const int SCREEN_WIDTH = 800;
-const int SCREEN_HEIGHT = 600;
+int screenWidth = 800;
+int screenHeight = 600;
+float aspectRatio = (float)screenWidth / (float)screenHeight;
 const char* WINDOW_NAME = "Advanced lighting: Blinn-Phong shading";
 // shaders
 const char* PLANE_VERT_SHADER = "src/5.advanced_lighting/1.advanced_lighting/plane.vs";
@@ -74,8 +75,8 @@ const char* CUBE_FRAG_SHADER = "src/5.advanced_lighting/1.advanced_lighting/ligh
 const char* WOOD_TEX = "assets/textures/wood.png";
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
-float lastX = SCREEN_WIDTH / 2;
-float lastY = SCREEN_HEIGHT / 2;
+float lastX = screenWidth / 2;
+float lastY = screenHeight / 2;
 bool firstMouse = true;
 // timing
 float deltaTime = 0.0f;
@@ -92,7 +93,7 @@ int main(void) {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, OPENGL_VERSION_MAJOR);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, OPENGL_VERSION_MINOR);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	GLFWwindow* window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, WINDOW_NAME, nullptr, nullptr);
+	GLFWwindow* window = glfwCreateWindow(screenWidth, screenHeight, WINDOW_NAME, nullptr, nullptr);
 	if (!window) {
 		std::cout << "Failed to create GLFW window" << std::endl;
 		glfwTerminate();
@@ -222,7 +223,7 @@ int main(void) {
 		planeShader.use();
 		glm::mat4 model = glm::mat4(1.0f);
 		glm::mat4 view = camera.getViewMatrix();
-		glm::mat4 projection = glm::perspective(glm::radians(camera.getFOV()), (float)SCREEN_WIDTH / (float)SCREEN_WIDTH, 0.1f, 100.0f);
+		glm::mat4 projection = glm::perspective(glm::radians(camera.getFOV()), aspectRatio, 0.1f, 100.0f);
 		planeShader.setMat4("model", model);
 		planeShader.setMat4("view", view);
 		planeShader.setMat4("projection", projection);
@@ -291,6 +292,9 @@ unsigned int loadTexture(const char* path, bool flipVertically) {
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
+	screenWidth = width;
+	screenHeight = height;
+	aspectRatio = (float)screenWidth / (float)screenHeight;
 }
 
 void mouseCallback(GLFWwindow* window, double xPos, double yPos) {
