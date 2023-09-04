@@ -138,14 +138,14 @@ int main(void) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	// create depth buffer (renderbuffer)
-	unsigned int rboDepth;
-	glGenRenderbuffers(1, &rboDepth);
-	glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
+	unsigned int depthRBO;
+	glGenRenderbuffers(1, &depthRBO);
+	glBindRenderbuffer(GL_RENDERBUFFER, depthRBO);
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, screenWidth, screenHeight);
 	// attach buffers
 	glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorBuffer, 0);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthRBO);
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		std::cout << "Framebuffer not complete!" << std::endl;
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -156,7 +156,7 @@ int main(void) {
 	lightPositions.push_back(glm::vec3(-1.4f, -1.9f, 9.0f));
 	lightPositions.push_back(glm::vec3(0.0f, -1.8f, 4.0f));
 	lightPositions.push_back(glm::vec3(0.8f, -1.7f, 6.0f));
-	// light colors colors
+	// light colors
 	std::vector<glm::vec3> lightColors;
 	lightColors.push_back(glm::vec3(200.0f, 200.0f, 200.0f));
 	lightColors.push_back(glm::vec3(0.1f, 0.0f, 0.0f));
@@ -224,6 +224,7 @@ int main(void) {
 
 	// optionally deallocate all resources
 	glDeleteFramebuffers(1, &hdrFBO);
+	glDeleteRenderbuffers(1, &depthRBO);
 
 	glfwTerminate();
 	return EXIT_SUCCESS;
