@@ -13,7 +13,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 // Custom libs
-#include <learnopengl/shader_m.h>
+#include <learnopengl/shader_g.h>
 #include <learnopengl/camera.h>
 #include <learnopengl/model.h>
 // Image loading
