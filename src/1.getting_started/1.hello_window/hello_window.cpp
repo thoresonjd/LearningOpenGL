@@ -1,22 +1,23 @@
 /**
  * @file hello_window.cpp
  * @brief Creating a window
- * @date June 2023
+ * @date Created: June 2023 | Last Modified: October 2024
  * @see https://learnopengl.com/Getting-started/Hello-Window
  */
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <string>
 #include <iostream>
 
-// configurations
-const int OPENGL_VERSION_MAJOR = 3;
-const int OPENGL_VERSION_MINOR = 3;
-const int SCREEN_WIDTH = 800;
-const int SCREEN_HEIGHT = 600;
-const std::string WINDOW_NAME = "Hello, window!";
-const float R = 0.2f, G = 0.3f, B = 0.3f, A = 1.0f;
+namespace {
+	// configurations
+	const int OPENGL_VERSION_MAJOR = 3;
+	const int OPENGL_VERSION_MINOR = 3;
+	const int SCREEN_WIDTH = 800;
+	const int SCREEN_HEIGHT = 600;
+	const char* WINDOW_NAME = "Hello, window!";
+	const float R = 0.2f, G = 0.3f, B = 0.3f, A = 1.0f;
+}
 
 /**
  * Handle window resizing
@@ -39,46 +40,44 @@ int main(void) {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, OPENGL_VERSION_MAJOR);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, OPENGL_VERSION_MINOR);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	
+
 	// create GLFW window object
-	GLFWwindow* window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, WINDOW_NAME.c_str(), nullptr, nullptr);
+	GLFWwindow* window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, WINDOW_NAME, nullptr, nullptr);
 	if (!window) {
 		std::cout << "Failed to create GLFW window" << std::endl;
 		glfwTerminate();
-		return EXIT_FAILURE;
+		return -1;
 	}
 	glfwMakeContextCurrent(window);
-
-	// set callbacks
 	glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
-	
-	// load OpenGL function pointers
+
+	// initialize GLAD: load OpenGL function pointers
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 		std::cout << "Failed to initialize GLAD" << std::endl;
 		glfwTerminate();
-		return EXIT_FAILURE;
+		return -1;
 	}
 
 	// render loop
 	while (!glfwWindowShouldClose(window)) {
-		
-		// input
+		// process input
 		processInput(window);
 
 		// render commands
 		glClearColor(R, G, B, A);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		// check and call events and swap buffers
+		// swap buffers and poll IO events
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 
 	glfwTerminate();
-	return EXIT_SUCCESS;
+	return 0;
 }
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
+	// ensure viewport dimensions match those of the window
 	glViewport(0, 0, width, height);
 }
 
