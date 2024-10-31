@@ -117,8 +117,10 @@ int main(void) {
 	// create vertex buffer object and vertex array object
 	unsigned int vbo, vao;
 	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
 	glGenBuffers(1, &vbo);
+
+	// bind VAO before configuring vertex data so data is bound to VAO
+	glBindVertexArray(vao);
 
 	// copy vertices array into vertex buffer
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
