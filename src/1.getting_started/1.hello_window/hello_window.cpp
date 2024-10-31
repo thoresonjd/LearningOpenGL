@@ -9,16 +9,6 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 
-namespace {
-	// configurations
-	const int OPENGL_VERSION_MAJOR = 3;
-	const int OPENGL_VERSION_MINOR = 3;
-	const int SCREEN_WIDTH = 800;
-	const int SCREEN_HEIGHT = 600;
-	const char* WINDOW_NAME = "Hello, window!";
-	const float R = 0.2f, G = 0.3f, B = 0.3f, A = 1.0f;
-}
-
 /**
  * Handle window resizing
  * @param window - a GLFW window object
@@ -32,6 +22,16 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height);
  * @param window - a GLFW window object
  */
 void processInput(GLFWwindow* window);
+
+namespace {
+	// configurations
+	const int OPENGL_VERSION_MAJOR = 3;
+	const int OPENGL_VERSION_MINOR = 3;
+	const int SCREEN_WIDTH = 800;
+	const int SCREEN_HEIGHT = 600;
+	const char* WINDOW_NAME = "Hello, window!";
+	const float R = 0.2f, G = 0.3f, B = 0.3f, A = 1.0f;
+}
 
 int main(void) {
 
@@ -52,7 +52,7 @@ int main(void) {
 	glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
 
 	// initialize GLAD: load OpenGL function pointers
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+	if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress))) {
 		std::cout << "Failed to initialize GLAD" << std::endl;
 		glfwTerminate();
 		return -1;
