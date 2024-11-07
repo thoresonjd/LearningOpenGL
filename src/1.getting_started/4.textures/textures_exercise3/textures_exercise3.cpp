@@ -1,24 +1,22 @@
 /**
- * @file textures_exercise3.cpp
- * @brief Zooming in on the textures to see individual texels
- * @date July 2023
+ * @file textures_exercise4.cpp
+ * @brief Zooming in on the textures and changing filters to see individual texels
+ * @date Created: July 2023 | Last modified: November 2024
  * @see https://learnopengl.com/Getting-started/Textures
  */
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <string>
-#include <iostream>
-#include <learnopengl/shader_s.h>
-#define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
+#include <learnopengl/shader_s.h>
+#include <iostream>
 
- /**
-  * Handle window resizing
-  * @param window - a GLFW window object
-  * @param width - new width of resize
-  * @param height - new height of resize
-  */
+/**
+ * Handle window resizing
+ * @param window - a GLFW window object
+ * @param width - new width of resize
+ * @param height - new height of resize
+ */
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 
 /**
@@ -27,150 +25,166 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height);
  */
 void processInput(GLFWwindow* window);
 
-// configurations
-const int OPENGL_VERSION_MAJOR = 3;
-const int OPENGL_VERSION_MINOR = 3;
-const int SCREEN_WIDTH = 800;
-const int SCREEN_HEIGHT = 600;
-const char* WINDOW_NAME = "Textures: exercise3";
-const char* V_SHADER_PATH = "src/1.getting_started/4.textures/textures_exercise3/vertex.shader";
-const char* F_SHADER_PATH = "src/1.getting_started/4.textures/textures_exercise3/fragment.shader";
-const char* CONTAINER_TEX = "assets/textures/container.jpg";
-const char* AWESOME_FACE_TEX = "assets/textures/awesomeface.png";
+namespace {
+	// configurations
+	constexpr int OPENGL_VERSION_MAJOR = 3;
+	constexpr int OPENGL_VERSION_MINOR = 3;
+	constexpr int SCREEN_WIDTH = 800;
+	constexpr int SCREEN_HEIGHT = 600;
+	const char* WINDOW_NAME = "Textures: Exercise 3";
+	const char* CONTAINER_TEX_PATH = "assets/textures/container.jpg";
+	const char* AWESOMEFACE_TEX_PATH = "assets/textures/awesomeface.png";
+	const char* VERTEX_SHADER_PATH = "src/1.getting_started/4.textures/textures_exercise3/shader.vs";
+	const char* FRAGMENT_SHADER_PATH = "src/1.getting_started/4.textures/textures_exercise3/shader.fs";
+}
 
 int main(void) {
-	// initialize GLFW and create window
+	// initialize GLFW
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, OPENGL_VERSION_MAJOR);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, OPENGL_VERSION_MINOR);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+	// create GLFW window object
 	GLFWwindow* window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, WINDOW_NAME, nullptr, nullptr);
 	if (!window) {
-		std::cout << "Failed to create GLFW window" << std::endl;
+		std::cout << "Failed to create GLFW window\n";
 		glfwTerminate();
-		return EXIT_FAILURE;
+		return -1;
 	}
 	glfwMakeContextCurrent(window);
 	glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
-
-	// initialize GLAD
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-		std::cout << "Failed to initialize GLAD" << std::endl;
+	
+	// initialize GLAD: load OpenGL function pointers
+	if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress))) {
+		std::cout << "Failed to initialize GLAD\n";
 		glfwTerminate();
-		return EXIT_FAILURE;
+		return -1;
 	}
 
-	// create shader program object
-	Shader shader(V_SHADER_PATH, F_SHADER_PATH);	
-
-	// establist vertices
+	// establish rectangle vertex and index data
 	float vertices[] = {
-		// positions        // colors		  // texture coords
-		0.5f, 0.5f, 0.0f,   1.0f, 0.0f, 0.0f, 0.55f, 0.55f, // top right
-		0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f, 0.55f, 0.45f, // bottom right
+		// positions        // colors         // texture coords
+		 0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.55f, 0.55f, // top right
+		 0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.55f, 0.45f, // bottom right
 		-0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.45f, 0.45f, // bottom left
-		-0.5f, 0.5f, 0.0f,  1.0f, 1.0f, 0.0f, 0.45f, 0.55f  // top left
+		-0.5f,  0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.45f, 0.55f  // top left
 	};
 	unsigned int indices[] = {
 		0, 1, 3, // first triangle
 		1, 2, 3  // second triangle
 	};
 
-	// create vertex buffer object and vertex array object
+	// create vertex buffer object, vertex array object, and element buffer object
 	unsigned int vbo, vao, ebo;
 	glGenVertexArrays(1, &vao);
 	glGenBuffers(1, &vbo);
 	glGenBuffers(1, &ebo);
+
+	// bind VAO before configuring vertex data so data is bound to VAO
 	glBindVertexArray(vao);
 
-	// copy verte x array into buffer
+	// copy vertices array into vertex buffer
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-	// copy index array elements into buffer
+	// copy indices into element buffer
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-	// position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+	// tell OpenGL how to interpret the vertex data via setting vertex attribute pointers
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(0));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(6 * sizeof(float)));
 	glEnableVertexAttribArray(0);
-
-	// color attribute
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
-
-	// texture attribute
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
 	glEnableVertexAttribArray(2);
 
-	// load and generate container texture
+	// unbind VBO and VAO
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	// unbind EBO after VAO to keep EBO data bound to VAO
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+	// create texture objects
 	unsigned int texture1, texture2;
 	glGenTextures(1, &texture1);
+	glGenTextures(1, &texture2);
+
+	// set texture wrapping/filtering options for the texture objects
 	glBindTexture(GL_TEXTURE_2D, texture1);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	int width, height, nrChannels;
-	stbi_set_flip_vertically_on_load(true); // flip images on y-axis
-	unsigned char* data = stbi_load(CONTAINER_TEX, &width, &height, &nrChannels, 0);
-	if (data) {
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-	}
-	else {
-		std::cout << "ERROR::TEXTURE::FAILED_TO_LOAD\n" << CONTAINER_TEX << std::endl;
-	}
-	stbi_image_free(data);
-
-	// load and generate awesome face texture
-	glGenTextures(1, &texture2);
 	glBindTexture(GL_TEXTURE_2D, texture2);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	data = stbi_load(AWESOME_FACE_TEX, &width, &height, &nrChannels, 0);
+
+	// load textures
+	stbi_set_flip_vertically_on_load(true);
+	int width, height, numChannels;
+	unsigned char* data = stbi_load(CONTAINER_TEX_PATH, &width, &height, &numChannels, 0);
 	if (data) {
+		glBindTexture(GL_TEXTURE_2D, texture1);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else {
+		std::cout << "Failed to load texture " << CONTAINER_TEX_PATH << std::endl;
+	}
+	stbi_image_free(data);
+	data = stbi_load(AWESOMEFACE_TEX_PATH, &width, &height, &numChannels, 0);
+	if (data) {
+		glBindTexture(GL_TEXTURE_2D, texture2);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
 	}
 	else {
-		std::cout << "ERROR::TEXTURE::FAILED_TO_LOAD\n" << CONTAINER_TEX << std::endl;
+		std::cout << "Failed to load texture" << AWESOMEFACE_TEX_PATH << std::endl;
 	}
 	stbi_image_free(data);
 
-	// activate shader before setting uniforms
+	// create shader object
+	Shader shader(VERTEX_SHADER_PATH, FRAGMENT_SHADER_PATH);
+
+	// notify OpenGL which texture unit each shader sampler belongs to
 	shader.use();
-	glUniform1i(glGetUniformLocation(shader.getID(), "texture1"), 0); // set it manually
-	shader.setInt("texture2", 1); // or with shader class
+	shader.setInt("texture1", 0);
+	shader.setInt("texture2", 1);
 
 	// render loop
 	while (!glfwWindowShouldClose(window)) {
+		// process keyboard input
 		processInput(window);
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+
+		// screen color
+		glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		// render container
+		// draw textures
+		shader.use();
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture1);
 		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, texture2);	
-		shader.use();
+		glBindTexture(GL_TEXTURE_2D, texture2);
 		glBindVertexArray(vao);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
+		// swap buffers and poll IO events
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 
-	// optionally deallocate all resources
+	// deallocate all resources
 	glDeleteVertexArrays(1, &vao);
 	glDeleteBuffers(1, &vbo);
 	glDeleteBuffers(1, &ebo);
-
 	glfwTerminate();
-	return EXIT_SUCCESS;
+	return 0;
 }
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
