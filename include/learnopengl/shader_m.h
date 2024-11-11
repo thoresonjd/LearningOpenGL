@@ -1,11 +1,13 @@
 /**
  * @file shader_m.h
  * @brief Shader class supporting matrices and vectors
- * @date July 2023
+ * @date Created: July 2023 | Last modified: November 2024
  * @see https://learnopengl.com/Getting-started/Transformations
  */
 
 #pragma once
+#ifndef SHADER_H
+#define SHADER_H
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
@@ -15,12 +17,16 @@
 #include <iostream>
 
 class Shader {
+private:
+    unsigned int id;
 public:
     Shader(const char* vertexPath, const char* fragmentPath);
     ~Shader();
+    Shader(const Shader& other) = delete;
+    Shader(Shader&& other) = delete;
+    Shader& operator=(const Shader& other) = delete;
+    Shader& operator=(Shader&& other) = delete;
     void use();
-    unsigned int getID();
-    // uniform utilities
     void setBool(const std::string& name, bool value) const;
     void setInt(const std::string& name, int value) const;
     void setFloat(const std::string& name, float value) const;
@@ -33,6 +39,6 @@ public:
     void setMat2(const std::string& name, const glm::mat2& mat) const;
     void setMat3(const std::string& name, const glm::mat3& mat) const;
     void setMat4(const std::string& name, const glm::mat4& mat) const;
-private:
-    unsigned int id;
 };
+
+#endif
