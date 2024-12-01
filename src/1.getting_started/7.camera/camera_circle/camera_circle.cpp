@@ -1,23 +1,17 @@
 /**
  * @file camera_circle.cpp
  * @brief Camera circling around objects
- * @date July 2023
+ * @date Created: July 2023 | Last modified: November 2024
  * @see https://learnopengl.com/Getting-started/Camera
  */
 
-// OpenGL implementation
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-// GLM
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-// Custom libs
-#include <learnopengl/shader_m.h>
-// Image loading
-#define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
-// C++ libs
+#include <learnopengl/shader_m.h>
 #include <iostream>
 
  /**
@@ -34,46 +28,47 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height);
  */
 void processInput(GLFWwindow* window);
 
-// configurations
-const int OPENGL_VERSION_MAJOR = 3;
-const int OPENGL_VERSION_MINOR = 3;
-const int SCREEN_WIDTH = 800;
-const int SCREEN_HEIGHT = 600;
-const char* WINDOW_NAME = "Camera: circle";
-const char* V_SHADER_PATH = "src/1.getting_started/7.camera/camera_circle/vertex.shader";
-const char* F_SHADER_PATH = "src/1.getting_started/7.camera/camera_circle/fragment.shader";
-const char* CONTAINER_TEX = "assets/textures/container.jpg";
-const char* AWESOME_FACE_TEX = "assets/textures/awesomeface.png";
+namespace {
+	// configurations
+	constexpr int OPENGL_VERSION_MAJOR = 3;
+	constexpr int OPENGL_VERSION_MINOR = 3;
+	constexpr int SCREEN_WIDTH = 800;
+	constexpr int SCREEN_HEIGHT = 600;
+	const char* WINDOW_NAME = "Camera: Circle";
+	const char* CONTAINER_TEX_PATH = "assets/textures/container.jpg";
+	const char* AWESOMEFACE_TEX_PATH = "assets/textures/awesomeface.png";
+	const char* VERTEX_SHADER_PATH = "src/1.getting_started/7.camera/camera_circle/shader.vs";
+	const char* FRAGMENT_SHADER_PATH = "src/1.getting_started/7.camera/camera_circle/shader.fs";
+}
 
 int main(void) {
-	// initialize GLFW and create window
+	// initialize GLFW
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, OPENGL_VERSION_MAJOR);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, OPENGL_VERSION_MINOR);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+	// create GLFW window object
 	GLFWwindow* window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, WINDOW_NAME, nullptr, nullptr);
 	if (!window) {
-		std::cout << "Failed to create GLFW window" << std::endl;
+		std::cout << "Failed to create GLFW window\n";
 		glfwTerminate();
-		return EXIT_FAILURE;
+		return -1;
 	}
 	glfwMakeContextCurrent(window);
 	glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
 
-	// initialize GLAD
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-		std::cout << "Failed to initialize GLAD" << std::endl;
+	// initialize GLAD: load OpenGL function pointers
+	if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress))) {
+		std::cout << "Failed to initialize GLAD\n";
 		glfwTerminate();
-		return EXIT_FAILURE;
+		return -1;
 	}
 
-	// create shader program object
-	Shader shader(V_SHADER_PATH, F_SHADER_PATH);	
-
-	// configure global OpenGL state
+	// enable OpenGL features
 	glEnable(GL_DEPTH_TEST);
 
-	// establist vertices
+	// establish rectangle vertex and index data
 	float vertices[] = {
 		// positions		  // texture coords
 		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
@@ -119,135 +114,140 @@ int main(void) {
 		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f
 	};
 
-	// define 10 cubes positions
-	glm::vec3 cubePositions[] = {
-		glm::vec3(0.0f,  0.0f,  0.0f),
-		glm::vec3(2.0f,  5.0f, -15.0f),
-		glm::vec3(-1.5f, -2.2f, -2.5f),
-		glm::vec3(-3.8f, -2.0f, -12.3f),
-		glm::vec3(2.4f, -0.4f, -3.5f),
-		glm::vec3(-1.7f,  3.0f, -7.5f),
-		glm::vec3(1.3f, -2.0f, -2.5f),
-		glm::vec3(1.5f,  2.0f, -2.5f),
-		glm::vec3(1.5f,  0.2f, -1.5f),
-		glm::vec3(-1.3f,  1.0f, -1.5f)
-	};
-
 	// create vertex buffer object and vertex array object
 	unsigned int vbo, vao;
 	glGenVertexArrays(1, &vao);
 	glGenBuffers(1, &vbo);
+
+	// bind VAO before configuring vertex data so data is bound to VAO
 	glBindVertexArray(vao);
 
-	// copy verte x array into buffer
+	// copy vertices array into vertex buffer
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-	// position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	// tell OpenGL how to interpret the vertex data via setting vertex attribute pointers
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), reinterpret_cast<void*>(0));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
 	glEnableVertexAttribArray(0);
-
-	// texture attribute
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
-	// load and generate container texture
+	// unbind VBO and VAO
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	// create texture objects
 	unsigned int texture1, texture2;
 	glGenTextures(1, &texture1);
+	glGenTextures(1, &texture2);
+
+	// set texture wrapping/filtering options for the texture objects
 	glBindTexture(GL_TEXTURE_2D, texture1);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	int width, height, nrChannels;
-	stbi_set_flip_vertically_on_load(true); // flip images on y-axis
-	unsigned char* data = stbi_load(CONTAINER_TEX, &width, &height, &nrChannels, 0);
-	if (data) {
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-	}
-	else {
-		std::cout << "ERROR::TEXTURE::FAILED_TO_LOAD\n" << CONTAINER_TEX << std::endl;
-	}
-	stbi_image_free(data);
-
-	// load and generate awesome face texture
-	glGenTextures(1, &texture2);
 	glBindTexture(GL_TEXTURE_2D, texture2);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	data = stbi_load(AWESOME_FACE_TEX, &width, &height, &nrChannels, 0);
+
+	// load textures
+	stbi_set_flip_vertically_on_load(true);
+	int width, height, numChannels;
+	unsigned char* data = stbi_load(CONTAINER_TEX_PATH, &width, &height, &numChannels, 0);
 	if (data) {
+		glBindTexture(GL_TEXTURE_2D, texture1);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else {
+		std::cout << "Failed to load texture " << CONTAINER_TEX_PATH << std::endl;
+	}
+	stbi_image_free(data);
+	data = stbi_load(AWESOMEFACE_TEX_PATH, &width, &height, &numChannels, 0);
+	if (data) {
+		glBindTexture(GL_TEXTURE_2D, texture2);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
 	}
 	else {
-		std::cout << "ERROR::TEXTURE::FAILED_TO_LOAD\n" << CONTAINER_TEX << std::endl;
+		std::cout << "Failed to load texture" << AWESOMEFACE_TEX_PATH << std::endl;
 	}
 	stbi_image_free(data);
 
-	// activate shader before setting uniforms
+	// create shader object
+	Shader shader(VERTEX_SHADER_PATH, FRAGMENT_SHADER_PATH);
+
+	// notify OpenGL which texture unit each shader sampler belongs to
 	shader.use();
 	shader.setInt("texture1", 0);
 	shader.setInt("texture2", 1);
 
+	// set up perspective transformation
+	glm::mat4 projection = glm::perspective(glm::radians(45.0f), static_cast<float>(SCREEN_WIDTH) / SCREEN_HEIGHT, 0.1f, 100.0f);
+	shader.setMat4("projection", projection);
+	
+	// set up cube positions
+	glm::vec3 cubePositions[] = {
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 5.0f,-15.0f),
+			glm::vec3(-1.5f,-2.2f,-2.5f),
+			glm::vec3(-3.8f,-2.0f,-12.3f),
+			glm::vec3(2.4f,-0.4f,-3.5f),
+			glm::vec3(-1.7f, 3.0f,-7.5f),
+			glm::vec3(1.3f,-2.0f,-2.5f),
+			glm::vec3(1.5f, 2.0f,-2.5f),
+			glm::vec3(1.5f, 0.2f,-1.5f),
+			glm::vec3(-1.3f, 1.0f,-1.5f)
+	};
+
 	// render loop
 	while (!glfwWindowShouldClose(window)) {
+		// process keyboard input
 		processInput(window);
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
-		// clear buffer bits so information does not overlap frames
+		// screen color
+		glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+
+		// clear color and depth buffers
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// bind textures
+		// camera/view/LookAt transformation
+		constexpr float RADIUS = 10.0f;
+		float cameraX = static_cast<float>(sin(glfwGetTime()) * RADIUS);
+		float cameraZ = static_cast<float>(cos(glfwGetTime()) * RADIUS);
+		glm::vec3 cameraPosition(cameraX, 0.0f, cameraZ);
+		glm::vec3 cameraTarget(0.0f);
+		glm::vec3 worldUp(0.0f, 1.0f, 0.0f);
+		glm::mat4 view = glm::lookAt(cameraPosition, cameraTarget, worldUp);
+		shader.setMat4("view", view);
+
+		// draw textured cubes
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture1);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, texture2);
-
-		// activate shader
-		shader.use();
-
-		// transformation for camera/view/LookAt
-		glm::mat4 view = glm::mat4(1.0f);
-		const float RADIUS = 10.0f;
-		float camX = static_cast<float>(sin(glfwGetTime()) * RADIUS);
-		float camZ = static_cast<float>(cos(glfwGetTime()) * RADIUS);
-		glm::vec3 cameraPos(camX, 0.0f, camZ);
-		glm::vec3 cameraTarget(0.0f, 0.0f, 0.0f);
-		glm::vec3 up(0.0f, 1.0f, 0.0f);
-		view = glm::lookAt(cameraPos, cameraTarget, up);
-		shader.setMat4("view", view);
-
-		// transformation for projection
-		glm::mat4 projection = glm::mat4(1.0f);
-		projection = glm::perspective(glm::radians(45.0f), (float)SCREEN_WIDTH / (float)SCREEN_WIDTH, 0.1f, 100.0f);
-		shader.setMat4("projection", projection);
-
-		// render cubes
 		glBindVertexArray(vao);
 		for (int i = 0; i < 10; i++) {
-			// transformation for model
-			glm::mat4 model = glm::mat4(1.0f);
-			model = glm::translate(model, cubePositions[i]);
+			glm::mat4 model = glm::translate(glm::mat4(1.0f), cubePositions[i]);
 			float angle = 20.0f * i;
-			model = glm::rotate(model, glm::radians(angle), glm::vec3(0.5f, 1.0f, 0.0f));
+			model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
 			shader.setMat4("model", model);
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 		}
 
+		// swap buffers and poll IO events
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 
-	// optionally deallocate all resources
+	// deallocate all resources
 	glDeleteVertexArrays(1, &vao);
 	glDeleteBuffers(1, &vbo);
-
 	glfwTerminate();
-	return EXIT_SUCCESS;
+	return 0;
 }
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
