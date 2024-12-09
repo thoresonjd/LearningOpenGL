@@ -1,32 +1,26 @@
 /**
  * @file colors.cpp
  * @brief Colors
- * @date July 2023
+ * @date Created: July 2023 | Last modified: December 2024
  * @see https://learnopengl.com/Lighting/Colors
  */
 
-// OpenGL implementation
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-// GLM
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-// Custom libs
+#include <stb_image.h>
 #include <learnopengl/shader_m.h>
 #include <learnopengl/camera.h>
-// Image loading
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
-// C++ libs
 #include <iostream>
 
- /**
-  * Handle window resizing
-  * @param window - a GLFW window object
-  * @param width - new width of resize
-  * @param height - new height of resize
-  */
+/**
+ * Handle window resizing
+ * @param window - a GLFW window object
+ * @param width - new width of resize
+ * @param height - new height of resize
+ */
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 
 /**
@@ -35,7 +29,7 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height);
  * @param xPos - x position of the mouse
  * @param yPos - y position of the mouse
  */
-void mouseCallback(GLFWwindow* window, double xPos, double yPos);
+void mouseCallback(GLFWwindow* window, double posX, double posY);
 
 /**
  * Handle mouse scrolling
@@ -51,158 +45,170 @@ void scrollCallback(GLFWwindow* window, double xOffset, double yOffset);
  */
 void processInput(GLFWwindow* window);
 
-// OpenGL configurations
-const int OPENGL_VERSION_MAJOR = 3;
-const int OPENGL_VERSION_MINOR = 3;
-const int SCREEN_WIDTH = 800;
-const int SCREEN_HEIGHT = 600;
-const char* WINDOW_NAME = "Colors";
-// shaders
-const char* VERT_SHADER = "src/2.lighting/1.colors/colors.vs";
-const char* OBJECT_FRAG_SHADER = "src/2.lighting/1.colors/object.fs";
-const char* LIGHT_FRAG_SHADER = "src/2.lighting/1.colors/light.fs";
-// camera
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
-float lastX = SCREEN_WIDTH / 2;
-float lastY = SCREEN_HEIGHT / 2;
-bool firstMouse = true;
-// timing
-float deltaTime = 0.0f;
-float lastFrame = 0.0f;
-// lighting
-glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+namespace {
+	// GLFW
+	constexpr int OPENGL_VERSION_MAJOR = 3;
+	constexpr int OPENGL_VERSION_MINOR = 3;
+	constexpr int SCREEN_WIDTH = 800;
+	constexpr int SCREEN_HEIGHT = 600;
+	const char* WINDOW_NAME = "Colors";
+	
+	// Shaders
+	const char* VERTEX_SHADER = "src/2.lighting/1.colors/colors.vs";
+	const char* OBJECT_FRAGMENT_SHADER = "src/2.lighting/1.colors/object.fs";
+	const char* LIGHT_FRAGMENT_SHADER = "src/2.lighting/1.colors/light.fs";
+
+	// Lighting
+	glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+
+	// Camera
+	Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+
+	// Time
+	float deltaTime = 0.0f;
+	float lastFrame = 0.0f;
+
+	// Mouse
+	bool isFirstMouse = true;
+	float lastMouseX = static_cast<float>(SCREEN_WIDTH) / 2.0f;
+	float lastMouseY = static_cast<float>(SCREEN_HEIGHT) / 2.0f;
+}
 
 int main(void) {
-	// initialize GLFW and create window
+	// initialize GLFW
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, OPENGL_VERSION_MAJOR);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, OPENGL_VERSION_MINOR);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+	// create GLFW window object
 	GLFWwindow* window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, WINDOW_NAME, nullptr, nullptr);
 	if (!window) {
-		std::cout << "Failed to create GLFW window" << std::endl;
+		std::cout << "Failed to create GLFW window\n";
 		glfwTerminate();
-		return EXIT_FAILURE;
+		return -1;
 	}
 	glfwMakeContextCurrent(window);
 	glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
-	glfwSetCursorPosCallback(window, mouseCallback);
 	glfwSetScrollCallback(window, scrollCallback);
+	glfwSetCursorPosCallback(window, mouseCallback);
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-	// initialize GLAD
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-		std::cout << "Failed to initialize GLAD" << std::endl;
+	// initialize GLAD: load OpenGL function pointers
+	if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress))) {
+		std::cout << "Failed to initialize GLAD\n";
 		glfwTerminate();
-		return EXIT_FAILURE;
+		return -1;
 	}
 
-	// create shader program objects
-	Shader objectShader(VERT_SHADER, OBJECT_FRAG_SHADER);	
-	Shader lightShader(VERT_SHADER, LIGHT_FRAG_SHADER);
-
-	// configure global OpenGL state
+	// enable OpenGL features
 	glEnable(GL_DEPTH_TEST);
 
-	// establist vertices
-	float vertices[] = {		
+	// establish cube vertex data
+	float cubeVertices[] = {
 		-0.5f, -0.5f, -0.5f,
 		 0.5f, -0.5f, -0.5f,
 		 0.5f,  0.5f, -0.5f,
 		 0.5f,  0.5f, -0.5f,
 		-0.5f,  0.5f, -0.5f,
 		-0.5f, -0.5f, -0.5f,
-
+							
 		-0.5f, -0.5f,  0.5f,
 		 0.5f, -0.5f,  0.5f,
 		 0.5f,  0.5f,  0.5f,
 		 0.5f,  0.5f,  0.5f,
 		-0.5f,  0.5f,  0.5f,
 		-0.5f, -0.5f,  0.5f,
-
+							
 		-0.5f,  0.5f,  0.5f,
 		-0.5f,  0.5f, -0.5f,
 		-0.5f, -0.5f, -0.5f,
 		-0.5f, -0.5f, -0.5f,
 		-0.5f, -0.5f,  0.5f,
 		-0.5f,  0.5f,  0.5f,
-
+							
 		 0.5f,  0.5f,  0.5f,
 		 0.5f,  0.5f, -0.5f,
 		 0.5f, -0.5f, -0.5f,
 		 0.5f, -0.5f, -0.5f,
 		 0.5f, -0.5f,  0.5f,
 		 0.5f,  0.5f,  0.5f,
-
+							
 		-0.5f, -0.5f, -0.5f,
 		 0.5f, -0.5f, -0.5f,
 		 0.5f, -0.5f,  0.5f,
 		 0.5f, -0.5f,  0.5f,
 		-0.5f, -0.5f,  0.5f,
 		-0.5f, -0.5f, -0.5f,
-
+							
 		-0.5f,  0.5f, -0.5f,
 		 0.5f,  0.5f, -0.5f,
 		 0.5f,  0.5f,  0.5f,
 		 0.5f,  0.5f,  0.5f,
 		-0.5f,  0.5f,  0.5f,
-		-0.5f,  0.5f, -0.5f,
+		-0.5f,  0.5f, -0.5f
 	};
 
-	// create vertex buffer object and vertex array object
-	unsigned int vbo, vao;
-	glGenVertexArrays(1, &vao);
+	// create VBO and VAOs
+	unsigned int vbo, objectVao, lightVao;
 	glGenBuffers(1, &vbo);
-	glBindVertexArray(vao);
 
-	// link VBO to VAO and copy vertex data into VBO
+	// Copy vertex data to GPU and set vertex position attribute for object
+	glGenVertexArrays(1, &objectVao);
+	glBindVertexArray(objectVao);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-	// position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), reinterpret_cast<void*>(0));
 	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
 
-	// create vertex array object for light source
-	unsigned int lightVAO;
-	glGenVertexArrays(1, &lightVAO);
-	glBindVertexArray(lightVAO);
+	// Set vertex position attribute for light source
+	glGenVertexArrays(1, &lightVao);
+	glBindVertexArray(lightVao);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), reinterpret_cast<void*>(0));
 	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	// Create shader objects
+	Shader objectShader(VERTEX_SHADER, OBJECT_FRAGMENT_SHADER);
+	Shader lightShader(VERTEX_SHADER, LIGHT_FRAGMENT_SHADER);
+
+	// Set colors for object and light 
+	glm::vec3 objectColor(1.0f, 0.5f, 0.31f);
+	glm::vec3 lightColor(1.0f);
+	objectShader.use();
+	objectShader.setVec3("objectColor", objectColor);
+	objectShader.setVec3("lightColor", lightColor);
 
 	// render loop
 	while (!glfwWindowShouldClose(window)) {
-		// per-frame time logic
-		float currentFrame = static_cast<float>(glfwGetTime());
+		// compute change in time
+		float currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
-		// process input
+		// process keyboard input
 		processInput(window);
 
-		// set color
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		// screen color
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-		// clear buffer bits so information does not overlap frames
+		// clear color and depth buffers
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// set uniforms for colors
-		objectShader.use();
-		glm::vec3 objectColor(1.0f, 0.5f, 0.31f);
-		glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
-		objectShader.setVec3("objectColor", objectColor);
-		objectShader.setVec3("lightColor", lightColor);
-
-		// render cube
-		glm::mat4 model = glm::mat4(1.0f);
+		// render cube object
+		glm::mat4 model(1.0f);
 		glm::mat4 view = camera.getViewMatrix();
-		glm::mat4 projection = glm::mat4(1.0f);
+		glm::mat4 projection(1.0f);
 		projection = glm::perspective(glm::radians(camera.getFOV()), (float)SCREEN_WIDTH / (float)SCREEN_WIDTH, 0.1f, 100.0f);
+		objectShader.use();
 		objectShader.setMat4("model", model);
 		objectShader.setMat4("view", view);
 		objectShader.setMat4("projection", projection);
-		glBindVertexArray(vao);
+		glBindVertexArray(objectVao);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
 		// render light source
@@ -213,39 +219,40 @@ int main(void) {
 		lightShader.setMat4("model", model);
 		lightShader.setMat4("view", view);
 		lightShader.setMat4("projection", projection);
-		glBindVertexArray(lightVAO);
+		glBindVertexArray(lightVao);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
-		// swap buffers and poll events
+		// swap buffers and poll IO events
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 
-	// optionally deallocate all resources
-	glDeleteVertexArrays(1, &vao);
-	glDeleteVertexArrays(1, &lightVAO);
+	// deallocate all resources
+	glDeleteVertexArrays(1, &objectVao);
+	glDeleteVertexArrays(1, &lightVao);
 	glDeleteBuffers(1, &vbo);
-
 	glfwTerminate();
-	return EXIT_SUCCESS;
+	return 0;
 }
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
 }
 
-void mouseCallback(GLFWwindow* window, double xPos, double yPos) {
-	float xPosition = static_cast<float>(xPos);
-	float yPosition = static_cast<float>(yPos);
-	if (firstMouse) {
-		lastX = xPosition;
-		lastY = yPosition;
-		firstMouse = false;
+void mouseCallback(GLFWwindow* window, double xPosition, double yPosition) {
+	float xPos = static_cast<float>(xPosition);
+	float yPos = static_cast<float>(yPosition);
+
+	if (isFirstMouse) {
+		lastMouseX = xPos;
+		lastMouseY = yPos;
+		isFirstMouse = false;
 	}
-	float xOffset = xPosition - lastX;
-	float yOffset = lastY - yPosition; // reversed since y-coordinates range from top to bottom
-	lastX = xPosition;
-	lastY = yPosition;
+
+	float xOffset = xPos - lastMouseX;
+	float yOffset = lastMouseY - yPos; // reversed since y-coordinates range from bottom to top
+	lastMouseX = xPos;
+	lastMouseY = yPos;
 	camera.processMouseMovement(xOffset, yOffset);
 }
 
@@ -254,14 +261,17 @@ void scrollCallback(GLFWwindow* window, double xOffset, double yOffset) {
 }
 
 void processInput(GLFWwindow* window) {
+	// window close / exit program
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
+
+	// camera movement
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 		camera.processKeyboard(CameraMovement::FORWARD, deltaTime);
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		camera.processKeyboard(CameraMovement::BACKWARD, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
 		camera.processKeyboard(CameraMovement::LEFT, deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		camera.processKeyboard(CameraMovement::BACKWARD, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		camera.processKeyboard(CameraMovement::RIGHT, deltaTime);
 }
