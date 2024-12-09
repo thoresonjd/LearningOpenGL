@@ -14,12 +14,12 @@
 #include <learnopengl/shader_m.h>
 #include <iostream>
 
- /**
-  * Handle window resizing
-  * @param window - a GLFW window object
-  * @param width - new width of resize
-  * @param height - new height of resize
-  */
+/**
+ * Handle window resizing
+ * @param window - a GLFW window object
+ * @param width - new width of resize
+ * @param height - new height of resize
+ */
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 
 /**
@@ -68,7 +68,7 @@ int main(void) {
 	// enable OpenGL features
 	glEnable(GL_DEPTH_TEST);
 
-	// establish rectangle vertex and index data
+	// establish cube vertex data
 	float vertices[] = {
 		// positions		  // texture coords
 		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
