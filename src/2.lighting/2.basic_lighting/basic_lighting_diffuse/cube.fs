@@ -1,20 +1,22 @@
 #version 330 core
 in vec3 fragPos;
-in vec3 normal;
-out vec4 fragColor;
+in vec3 norm;
 uniform vec3 objectColor;
 uniform vec3 lightColor;
 uniform vec3 lightPos;
+out vec4 fragColor;
 void main() {
-	// ambient lighting
-	float ambientFactor = 0.1f;
-	vec3 ambient = ambientFactor * lightColor;
-	// diffuse lighting
-	vec3 norm = normalize(normal);
+	// ambient component
+	float ambientStrength = 0.1;
+	vec3 ambient = ambientStrength * lightColor;
+
+	// diffuse component
+	vec3 normal = normalize(norm);
 	vec3 lightDir = normalize(lightPos - fragPos);
-	float diff = max(dot(norm, lightDir), 0.0f);
+	float diff = max(dot(normal, lightDir), 0.0);
 	vec3 diffuse = diff * lightColor;
-	// final result
-	vec3 lighting = ambient + diffuse;
-	fragColor = vec4(lighting * objectColor, 1.0f);
+
+	// result
+	vec3 result = (ambient + diffuse) * objectColor;
+	fragColor = vec4(result, 1.0);
 }
