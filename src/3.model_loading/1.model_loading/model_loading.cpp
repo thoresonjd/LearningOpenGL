@@ -1,25 +1,19 @@
 /**
  * @file model_loading.cpp
  * @brief Loading a model
- * @date July 2023
+ * @date Created: July 2023 | Last modified: February 2025
  * @see https://learnopengl.com/Model-Loading/Model
  */
 
- // OpenGL implementation
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-// GLM
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-// Custom libs
+#include <stb_image.h>
 #include <learnopengl/shader_g.h>
 #include <learnopengl/camera.h>
 #include <learnopengl/model.h>
-// Image loading
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
-// C++ libs
 #include <iostream>
 
 /**
@@ -36,7 +30,7 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height);
  * @param xPos - x position of the mouse
  * @param yPos - y position of the mouse
  */
-void mouseCallback(GLFWwindow* window, double xPos, double yPos);
+void mouseCallback(GLFWwindow* window, double posX, double posY);
 
 /**
  * Handle mouse scrolling
@@ -52,68 +46,68 @@ void scrollCallback(GLFWwindow* window, double xOffset, double yOffset);
  */
 void processInput(GLFWwindow* window);
 
-// OpenGL configurations
-const int OPENGL_VERSION_MAJOR = 3;
-const int OPENGL_VERSION_MINOR = 3;
-const int SCREEN_WIDTH = 800;
-const int SCREEN_HEIGHT = 600;
-const char* WINDOW_NAME = "Model loading";
-// shaders
-const char* MODEL_VERT_SHADER = "src/3.model_loading/1.model_loading/model.vs";
-const char* MODEL_FRAG_SHADER = "src/3.model_loading/1.model_loading/model.fs";
-const char* LIGHT_VERT_SHADER = "src/3.model_loading/1.model_loading/light.vs";
-const char* LIGHT_FRAG_SHADER = "src/3.model_loading/1.model_loading/light.fs";
-// model
-const char* MODEL = "assets/models/backpack/backpack.obj";
-// camera
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
-float lastX = SCREEN_WIDTH / 2;
-float lastY = SCREEN_HEIGHT / 2;
-bool firstMouse = true;
-// timing
-float deltaTime = 0.0f;
-float lastFrame = 0.0f;
+namespace {
+	// GLFW
+	constexpr int OPENGL_VERSION_MAJOR = 3;
+	constexpr int OPENGL_VERSION_MINOR = 3;
+	constexpr int SCREEN_WIDTH = 800;
+	constexpr int SCREEN_HEIGHT = 600;
+	const char* WINDOW_NAME = "Model Loading";
+	
+	// Shaders
+	const char* MODEL_VERTEX_SHADER = "src/3.model_loading/1.model_loading/model.vs";
+	const char* MODEL_FRAGMENT_SHADER = "src/3.model_loading/1.model_loading/model.fs";
+	const char* LIGHT_VERTEX_SHADER = "src/3.model_loading/1.model_loading/light.vs";
+	const char* LIGHT_FRAGMENT_SHADER = "src/3.model_loading/1.model_loading/light.fs";
+
+	// Model
+	const char* MODEL_PATH = "assets/models/backpack/backpack.obj";
+
+	// Camera
+	Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+
+	// Time
+	float deltaTime = 0.0f;
+	float lastFrame = 0.0f;
+
+	// Mouse
+	bool isFirstMouse = true;
+	float lastMouseX = static_cast<float>(SCREEN_WIDTH) / 2.0f;
+	float lastMouseY = static_cast<float>(SCREEN_HEIGHT) / 2.0f;
+}
 
 int main(void) {
-	// initialize GLFW and create window
+	// initialize GLFW
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, OPENGL_VERSION_MAJOR);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, OPENGL_VERSION_MINOR);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+	// create GLFW window object
 	GLFWwindow* window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, WINDOW_NAME, nullptr, nullptr);
 	if (!window) {
-		std::cout << "Failed to create GLFW window" << std::endl;
+		std::cout << "Failed to create GLFW window\n";
 		glfwTerminate();
-		return EXIT_FAILURE;
+		return -1;
 	}
 	glfwMakeContextCurrent(window);
 	glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
-	glfwSetCursorPosCallback(window, mouseCallback);
 	glfwSetScrollCallback(window, scrollCallback);
+	glfwSetCursorPosCallback(window, mouseCallback);
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-	// initialize GLAD
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-		std::cout << "Failed to initialize GLAD" << std::endl;
+	// initialize GLAD: load OpenGL function pointers
+	if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress))) {
+		std::cout << "Failed to initialize GLAD\n";
 		glfwTerminate();
-		return EXIT_FAILURE;
+		return -1;
 	}
 
-	// configure global OpenGL state
+	// enable OpenGL features
 	glEnable(GL_DEPTH_TEST);
 
-	// tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
-	stbi_set_flip_vertically_on_load(true);
-
-	// create model object
-	Model object(MODEL);
-	
-	// create shader programs
-	Shader objectShader(MODEL_VERT_SHADER, MODEL_FRAG_SHADER);
-	Shader lightShader(LIGHT_VERT_SHADER, LIGHT_FRAG_SHADER);
-
 	// create light source object
-	float vertices[] = {
+	float lightVertices[] = {
 		0.5f, 0.5f, 0.5f,	 // 0: right top front
 		0.5f, 0.5f, -0.5f,   // 1: right top back
 		0.5f, -0.5f, 0.5f,   // 2: right bottom front
@@ -124,7 +118,7 @@ int main(void) {
 		-0.5f, -0.5f, -0.5f, // 7: left bottom back
 	};
 
-	unsigned int indices[] = {
+	unsigned int lightIndices[] = {
 		0, 1, 4, // top
 		1, 4, 5,
 		1, 4, 6, // front
@@ -139,55 +133,83 @@ int main(void) {
 		5, 6, 7
 	};
 
-	unsigned int lightVBO, lightVAO, lightEBO;
-	glGenVertexArrays(1, &lightVAO);
-	glGenBuffers(1, &lightVBO);
-	glGenBuffers(1, &lightEBO);
-	glBindVertexArray(lightVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, lightVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lightEBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+	// create VBO and VAOs
+	unsigned int lightVbo, lightVao, lightEbo;
+	glGenBuffers(1, &lightVbo);
+
+	// Copy vertex data to GPU and set vertex position attribute for object
+	glGenVertexArrays(1, &lightVao);
+	glBindVertexArray(lightVao);
+	glBindBuffer(GL_ARRAY_BUFFER, lightVbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(lightVertices), lightVertices, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), reinterpret_cast<void*>(0));
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
+
+	// Set vertex position attribute for light source
+	glGenVertexArrays(1, &lightVao);
+	glBindVertexArray(lightVao);
+	glBindBuffer(GL_ARRAY_BUFFER, lightVbo);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), reinterpret_cast<void*>(0));
+	glEnableVertexAttribArray(0);
+
+	// copy indices into element buffer
+	glGenBuffers(1, &lightEbo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lightEbo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(lightIndices), lightIndices, GL_STATIC_DRAW);
+
+	// unbind VBO and VAO
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	// unbind EBO after VAO to keep EBO data bound to VAO
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+	// create model object
+	stbi_set_flip_vertically_on_load(true);
+	Model object(MODEL_PATH);
+
+	// Create shader objects
+	Shader objectShader(MODEL_VERTEX_SHADER, MODEL_FRAGMENT_SHADER);
+	Shader lightShader(LIGHT_VERTEX_SHADER, LIGHT_FRAGMENT_SHADER);
 
 	// render loop
 	while (!glfwWindowShouldClose(window)) {
-		// per-frame time logic
+		// per-frame time logic; compute change in time
 		float currentFrame = static_cast<float>(glfwGetTime());
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
-		// process input
+		// process keyboard input
 		processInput(window);
 
-		// set color
+		// screen color
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
-		// clear buffer bits so information does not overlap frames
+		// clear color and depth buffers
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// view/projection transformations
-		glm::mat4 view = camera.getViewMatrix();
-		glm::mat4 projection = glm::perspective(glm::radians(camera.getFOV()), (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, 0.1f, 100.0f);
-
-		// render the light source
-		lightShader.use();
-		glm::mat4 model = glm::mat4(1.0f);
+		// render the light source; full revolution around the model every four seconds
 		glm::vec3 lightPos(0.0f);
-		// full revolution around the model every four seconds
+		glm::mat4 model(1.0f);
+		glm::mat4 view = camera.getViewMatrix();
+		glm::mat4 projection = glm::perspective(glm::radians(camera.getFOV()), static_cast<float>(SCREEN_WIDTH) / static_cast<float>(SCREEN_WIDTH), 0.1f, 100.0f);
+		lightShader.use();
 		lightPos.x = 5.0f * sin(currentFrame * glm::radians(90.0f));
 		lightPos.z = 5.0f * cos(currentFrame * glm::radians(90.0f));
 		model = glm::translate(model, lightPos);
-		model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
+		model = glm::scale(model, glm::vec3(0.5f));
 		lightShader.setMat4("model", model);
 		lightShader.setMat4("view", view);
 		lightShader.setMat4("projection", projection);
-		glBindVertexArray(lightVAO);
-		glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(float), GL_UNSIGNED_INT, 0);
+		glBindVertexArray(lightVao);
+		glDrawElements(GL_TRIANGLES, sizeof(lightIndices) / sizeof(float), GL_UNSIGNED_INT, 0);
 
-		// enable object shader, configure lighting, set transformation uniforms
+		// render loaded model
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
+		model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
 		objectShader.use();
 		objectShader.setVec3("viewPos", camera.getPosition());
 		objectShader.setFloat("material.shininess", 64.0f);
@@ -198,41 +220,42 @@ int main(void) {
 		objectShader.setFloat("light.constant", 1.0f);
 		objectShader.setFloat("light.linear", 0.09f);
 		objectShader.setFloat("light.quadratic", 0.032f);
+		objectShader.setMat4("model", model);
 		objectShader.setMat4("view", view);
 		objectShader.setMat4("projection", projection);
-
-		// render the loaded model
-		model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-		model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
-		objectShader.setMat4("model", model);
 		object.draw(objectShader);
 
-		// swap buffers and poll events
+		// swap buffers and poll IO events
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 
+	// deallocate all resources
+	glDeleteVertexArrays(1, &lightVao);
+	glDeleteBuffers(1, &lightVbo);
+	glDeleteBuffers(1, &lightEbo);
 	glfwTerminate();
-	return EXIT_SUCCESS;
+	return 0;
 }
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
 }
 
-void mouseCallback(GLFWwindow* window, double xPos, double yPos) {
-	float xPosition = static_cast<float>(xPos);
-	float yPosition = static_cast<float>(yPos);
-	if (firstMouse) {
-		lastX = xPosition;
-		lastY = yPosition;
-		firstMouse = false;
+void mouseCallback(GLFWwindow* window, double xPosition, double yPosition) {
+	float xPos = static_cast<float>(xPosition);
+	float yPos = static_cast<float>(yPosition);
+
+	if (isFirstMouse) {
+		lastMouseX = xPos;
+		lastMouseY = yPos;
+		isFirstMouse = false;
 	}
-	float xOffset = xPosition - lastX;
-	float yOffset = lastY - yPosition; // reversed since y-coordinates range from top to bottom
-	lastX = xPosition;
-	lastY = yPosition;
+
+	float xOffset = xPos - lastMouseX;
+	float yOffset = lastMouseY - yPos; // reversed since y-coordinates range from bottom to top
+	lastMouseX = xPos;
+	lastMouseY = yPos;
 	camera.processMouseMovement(xOffset, yOffset);
 }
 
@@ -241,14 +264,17 @@ void scrollCallback(GLFWwindow* window, double xOffset, double yOffset) {
 }
 
 void processInput(GLFWwindow* window) {
+	// window close / exit program
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
+
+	// camera movement
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 		camera.processKeyboard(CameraMovement::FORWARD, deltaTime);
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		camera.processKeyboard(CameraMovement::BACKWARD, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
 		camera.processKeyboard(CameraMovement::LEFT, deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		camera.processKeyboard(CameraMovement::BACKWARD, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		camera.processKeyboard(CameraMovement::RIGHT, deltaTime);
 }
