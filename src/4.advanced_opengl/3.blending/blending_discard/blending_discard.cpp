@@ -1,26 +1,19 @@
 /**
  * @file blending_discard.cpp
  * @brief Discarding completely transparent fragments
- * @date July 2023
+ * @date Created: July 2023 | Last modified: March 2025
  * @see https://learnopengl.com/Advanced-OpenGL/Blending
  */
 
- // OpenGL implementation
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-// GLM
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-// Custom libs
-#include <learnopengl/shader_m.h>
+#include <learnopengl/shader_g.h>
 #include <learnopengl/camera.h>
-// Image loading
-#define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
-// C++ libs
 #include <iostream>
-#include <vector>
 
 /**
  * Reads a provided texture into memory
@@ -30,12 +23,12 @@
  */
 unsigned int loadTexture(const char* path, bool flipVertically = false);
 
-/**
- * Handle window resizing
- * @param window - a GLFW window object
- * @param width - new width of resize
- * @param height - new height of resize
- */
+ /**
+  * Handle window resizing
+  * @param window - a GLFW window object
+  * @param width - new width of resize
+  * @param height - new height of resize
+  */
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 
 /**
@@ -60,28 +53,38 @@ void scrollCallback(GLFWwindow* window, double xOffset, double yOffset);
  */
 void processInput(GLFWwindow* window);
 
-// OpenGL configurations
-const int OPENGL_VERSION_MAJOR = 3;
-const int OPENGL_VERSION_MINOR = 3;
-const int SCREEN_WIDTH = 800;
-const int SCREEN_HEIGHT = 600;
-const char* WINDOW_NAME = "Blending: discard";
-// shaders
-const char* VERT_SHADER = "src/4.advanced_opengl/3.blending/blending_discard/blending_discard.vs";
-const char* FRAG_SHADER = "src/4.advanced_opengl/3.blending/blending_discard/blending_discard.fs";
-// textures
-const char* CUBE_TEX = "assets/textures/marble.jpg";
-const char* PLANE_TEX = "assets/textures/metal.png";
-const char* GRASS_TEX = "assets/textures/grass.png";
-// camera
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
-float aspectRatio = SCREEN_WIDTH / SCREEN_HEIGHT;
-float lastX = SCREEN_WIDTH / 2;
-float lastY = SCREEN_HEIGHT / 2;
-bool firstMouse = true;
-// timing
-float deltaTime = 0.0f;
-float lastFrame = 0.0f;
+namespace {
+	// GLFW
+	constexpr int OPENGL_VERSION_MAJOR = 3;
+	constexpr int OPENGL_VERSION_MINOR = 3;
+	constexpr int SCREEN_WIDTH = 800;
+	constexpr int SCREEN_HEIGHT = 600;
+	const char* WINDOW_NAME = "Blending: Discard";
+
+	// Shaders
+	const char* VERT_SHADER = "src/4.advanced_opengl/3.blending/blending_discard/blending_discard.vs";
+	const char* FRAG_SHADER = "src/4.advanced_opengl/3.blending/blending_discard/blending_discard.fs";
+	
+	// Textures
+	const char* CUBE_TEX = "assets/textures/marble.jpg";
+	const char* PLANE_TEX = "assets/textures/metal.png";
+	const char* GRASS_TEX = "assets/textures/grass.png";
+
+	// Camera
+	constexpr float ASPECT_RATIO = static_cast<float>(SCREEN_WIDTH) / static_cast<float>(SCREEN_WIDTH);
+	constexpr float NEAR_PLANE = 0.1f;
+	constexpr float FAR_PLANE = 100.0f;
+	Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+
+	// Time
+	float deltaTime = 0.0f;
+	float lastFrame = 0.0f;
+
+	// Mouse
+	bool isFirstMouse = true;
+	float lastMouseX = static_cast<float>(SCREEN_WIDTH) / 2.0f;
+	float lastMouseY = static_cast<float>(SCREEN_HEIGHT) / 2.0f;
+}
 
 int main(void) {
 	// initialize GLFW and create window
@@ -89,11 +92,13 @@ int main(void) {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, OPENGL_VERSION_MAJOR);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, OPENGL_VERSION_MINOR);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+	// create GLFW window object
 	GLFWwindow* window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, WINDOW_NAME, nullptr, nullptr);
 	if (!window) {
 		std::cout << "Failed to create GLFW window" << std::endl;
 		glfwTerminate();
-		return EXIT_FAILURE;
+		return -1;
 	}
 	glfwMakeContextCurrent(window);
 	glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
@@ -101,18 +106,18 @@ int main(void) {
 	glfwSetScrollCallback(window, scrollCallback);
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-	// initialize GLAD
+	// initialize GLAD: load OpenGL function pointers
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 		std::cout << "Failed to initialize GLAD" << std::endl;
 		glfwTerminate();
-		return EXIT_FAILURE;
+		return -1;
 	}
 
 	// configure global OpenGL state
 	glEnable(GL_DEPTH_TEST);
 
 	// create shader program object
-	Shader shader(VERT_SHADER, FRAG_SHADER);
+	Shader shader(VERT_SHADER, FRAG_SHADER);	
 
 	// establist vertices
 	float cubeVertices[] = {
@@ -190,9 +195,9 @@ int main(void) {
 	glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), &cubeVertices, GL_STATIC_DRAW);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), reinterpret_cast<void*>(0));
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
 	glBindVertexArray(0);
 
 	// plane VAO
@@ -203,11 +208,11 @@ int main(void) {
 	glBindBuffer(GL_ARRAY_BUFFER, planeVBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(planeVertices), &planeVertices, GL_STATIC_DRAW);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), reinterpret_cast<void*>(0));
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
 	glBindVertexArray(0);
-
+	
 	// vegetation VAO
 	unsigned int vegetationVAO, vegetationVBO;
 	glGenVertexArrays(1, &vegetationVAO);
@@ -216,9 +221,9 @@ int main(void) {
 	glBindBuffer(GL_ARRAY_BUFFER, vegetationVBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(transparentVertices), &transparentVertices, GL_STATIC_DRAW);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), reinterpret_cast<void*>(0));
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
 	glBindVertexArray(0);
 
 	// load textures
@@ -258,20 +263,13 @@ int main(void) {
 		shader.use();
 		glm::mat4 model = glm::mat4(1.0f);
 		glm::mat4 view = camera.getViewMatrix();
-		glm::mat4 projection = glm::perspective(glm::radians(camera.getFOV()), aspectRatio, 0.1f, 100.0f);
+		glm::mat4 projection = glm::perspective(glm::radians(camera.getFOV()), ASPECT_RATIO, NEAR_PLANE, FAR_PLANE);
 		shader.setMat4("view", view);
 		shader.setMat4("projection", projection);
 
-		// floor
-		glBindVertexArray(planeVAO);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, floorTexture);
-		model = glm::mat4(1.0f);
-		shader.setMat4("model", model);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
-
 		// cubes
 		glBindVertexArray(cubeVAO);
+		glActiveTexture(GL_TEXTURE0);	
 		glBindTexture(GL_TEXTURE_2D, cubeTexture);
 		model = glm::translate(model, glm::vec3(-1.0f, 0.0f, -1.0f));
 		shader.setMat4("model", model);
@@ -281,12 +279,19 @@ int main(void) {
 		shader.setMat4("model", model);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
+		// floor
+		glBindVertexArray(planeVAO);
+		glBindTexture(GL_TEXTURE_2D, floorTexture);
+		model = glm::mat4(1.0f);
+		shader.setMat4("model", model);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		glBindVertexArray(0);
+
 		// vegetation
 		glBindVertexArray(vegetationVAO);
 		glBindTexture(GL_TEXTURE_2D, grassTexture);
 		for (unsigned int i = 0; i < vegetation.size(); i++) {
-			model = glm::mat4(1.0f);
-			model = glm::translate(model, vegetation[i]);
+			model = glm::translate(glm::mat4(1.0f), vegetation[i]);
 			shader.setMat4("model", model);
 			glDrawArrays(GL_TRIANGLES, 0, 6);
 		}
@@ -305,7 +310,7 @@ int main(void) {
 	glDeleteBuffers(1, &vegetationVBO);
 
 	glfwTerminate();
-	return EXIT_SUCCESS;
+	return 0;
 }
 
 unsigned int loadTexture(const char* path, bool flipVertically) {
@@ -325,8 +330,6 @@ unsigned int loadTexture(const char* path, bool flipVertically) {
 		glBindTexture(GL_TEXTURE_2D, textureID);
 		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
-		// Clamp to edge if alpha channel present to prevent improper border wrapping
-		// for this tutorial: use GL_CLAMP_TO_EDGE to prevent semi-transparent borders. Due to interpolation it takes texels from next repeat
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -346,15 +349,15 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
 void mouseCallback(GLFWwindow* window, double xPos, double yPos) {
 	float xPosition = static_cast<float>(xPos);
 	float yPosition = static_cast<float>(yPos);
-	if (firstMouse) {
-		lastX = xPosition;
-		lastY = yPosition;
-		firstMouse = false;
+	if (isFirstMouse) {
+		lastMouseX = xPosition;
+		lastMouseY = yPosition;
+		isFirstMouse = false;
 	}
-	float xOffset = xPosition - lastX;
-	float yOffset = lastY - yPosition; // reversed since y-coordinates range from top to bottom
-	lastX = xPosition;
-	lastY = yPosition;
+	float xOffset = xPosition - lastMouseX;
+	float yOffset = lastMouseY - yPosition; // reversed since y-coordinates range from top to bottom
+	lastMouseX = xPosition;
+	lastMouseY = yPosition;
 	camera.processMouseMovement(xOffset, yOffset);
 }
 
@@ -363,14 +366,17 @@ void scrollCallback(GLFWwindow* window, double xOffset, double yOffset) {
 }
 
 void processInput(GLFWwindow* window) {
+	// window close / exit program
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
+
+	// camera movement
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 		camera.processKeyboard(CameraMovement::FORWARD, deltaTime);
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		camera.processKeyboard(CameraMovement::BACKWARD, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
 		camera.processKeyboard(CameraMovement::LEFT, deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		camera.processKeyboard(CameraMovement::BACKWARD, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		camera.processKeyboard(CameraMovement::RIGHT, deltaTime);
 }
