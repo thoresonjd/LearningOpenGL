@@ -1,24 +1,18 @@
 /**
  * @file face_culling.cpp
  * @brief Experimenting with face culling
- * @date July 2023
+ * @date Created: July 2023 | Last modified: May 2025
  * @see https://learnopengl.com/Advanced-OpenGL/Face-culling
  */
 
- // OpenGL implementation
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-// GLM
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-// Custom libs
-#include <learnopengl/shader_m.h>
+#include <learnopengl/shader_g.h>
 #include <learnopengl/camera.h>
-// Image loading
-#define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
-// C++ libs
 #include <iostream>
 
 /**
@@ -59,26 +53,36 @@ void scrollCallback(GLFWwindow* window, double xOffset, double yOffset);
  */
 void processInput(GLFWwindow* window);
 
-// OpenGL configurations
-const int OPENGL_VERSION_MAJOR = 3;
-const int OPENGL_VERSION_MINOR = 3;
-const int SCREEN_WIDTH = 800;
-const int SCREEN_HEIGHT = 600;
-const char* WINDOW_NAME = "Face culling";
-// shaders
-const char* VERT_SHADER = "src/4.advanced_opengl/4.face_culling/face_culling.vs";
-const char* FRAG_SHADER = "src/4.advanced_opengl/4.face_culling/face_culling.fs";
-// textures
-const char* CUBE_TEX = "assets/textures/marble.jpg";
-// camera
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
-float aspectRatio = SCREEN_WIDTH / SCREEN_HEIGHT;
-float lastX = SCREEN_WIDTH / 2;
-float lastY = SCREEN_HEIGHT / 2;
-bool firstMouse = true;
-// timing
-float deltaTime = 0.0f;
-float lastFrame = 0.0f;
+namespace {
+	// GLFW
+	constexpr int OPENGL_VERSION_MAJOR = 3;
+	constexpr int OPENGL_VERSION_MINOR = 3;
+	constexpr int SCREEN_WIDTH = 800;
+	constexpr int SCREEN_HEIGHT = 600;
+	const char* WINDOW_NAME = "Face Culling";
+
+	// Shaders
+	const char* VERT_SHADER = "src/4.advanced_opengl/4.face_culling/face_culling.vs";
+	const char* FRAG_SHADER = "src/4.advanced_opengl/4.face_culling/face_culling.fs";
+	
+	// Textures
+	const char* CUBE_TEX = "assets/textures/marble.jpg";
+
+	// Camera
+	constexpr float ASPECT_RATIO = static_cast<float>(SCREEN_WIDTH) / static_cast<float>(SCREEN_WIDTH);
+	constexpr float NEAR_PLANE = 0.1f;
+	constexpr float FAR_PLANE = 100.0f;
+	Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+
+	// Time
+	float deltaTime = 0.0f;
+	float lastFrame = 0.0f;
+
+	// Mouse
+	bool isFirstMouse = true;
+	float lastMouseX = static_cast<float>(SCREEN_WIDTH) / 2.0f;
+	float lastMouseY = static_cast<float>(SCREEN_HEIGHT) / 2.0f;
+}
 
 int main(void) {
 	// initialize GLFW and create window
@@ -86,11 +90,13 @@ int main(void) {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, OPENGL_VERSION_MAJOR);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, OPENGL_VERSION_MINOR);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+	// create GLFW window object
 	GLFWwindow* window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, WINDOW_NAME, nullptr, nullptr);
 	if (!window) {
 		std::cout << "Failed to create GLFW window" << std::endl;
 		glfwTerminate();
-		return EXIT_FAILURE;
+		return -1;
 	}
 	glfwMakeContextCurrent(window);
 	glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
@@ -98,29 +104,31 @@ int main(void) {
 	glfwSetScrollCallback(window, scrollCallback);
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-	// initialize GLAD
+	// initialize GLAD: load OpenGL function pointers
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 		std::cout << "Failed to initialize GLAD" << std::endl;
 		glfwTerminate();
-		return EXIT_FAILURE;
+		return -1;
 	}
 
 	// configure global OpenGL state
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
-	// since each triangle's vertices are specified in counter-clockwise order,
-	// when facing away from the viewer (back facing), these faces will be culled (discarded)
-	// because they will thus be in clockwise order instead. setting the front face to
-	// clockwise reverses this effect, culling the front faces instead
-	// glFrontFace(GL_CW);
+	/*
+	Since each triangle's vertices are specified in counter-clockwise order,
+	when facing away from the viewer (back facing), these faces will be culled (discarded)
+	because they will thus be in clockwise order instead. Setting the front face to
+	clockwise reverses this effect, culling the front faces instead.
+	*/
+	//glFrontFace(GL_CW);
 
 	// create shader program object
 	Shader shader(VERT_SHADER, FRAG_SHADER);
 
 	/*
 	Remember: to specify vertices in a counter-clockwise winding order you need to visualize the triangle
-	as if you're in front of the triangle and from that point of view, is where you set their order.
+	as if you're in front of the triangle and from that point of view; this is how you set their order.
 
 	To define the order of a triangle on the right side of the cube for example, you'd imagine yourself looking
 	straight at the right side of the cube, and then visualize the triangle and make sure their order is specified
@@ -180,9 +188,9 @@ int main(void) {
 	glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), &cubeVertices, GL_STATIC_DRAW);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), reinterpret_cast<void*>(0));
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
 	glBindVertexArray(0);
 
 	// load textures
@@ -212,7 +220,7 @@ int main(void) {
 		shader.use();
 		glm::mat4 model = glm::mat4(1.0f);
 		glm::mat4 view = camera.getViewMatrix();
-		glm::mat4 projection = glm::perspective(glm::radians(camera.getFOV()), aspectRatio, 0.1f, 100.0f);
+		glm::mat4 projection = glm::perspective(glm::radians(camera.getFOV()), ASPECT_RATIO, 0.1f, 100.0f);
 		shader.setMat4("model", model);
 		shader.setMat4("view", view);
 		shader.setMat4("projection", projection);
@@ -233,7 +241,7 @@ int main(void) {
 	glDeleteBuffers(1, &cubeVBO);
 
 	glfwTerminate();
-	return EXIT_SUCCESS;
+	return 0;
 }
 
 unsigned int loadTexture(const char* path, bool flipVertically) {
@@ -253,8 +261,8 @@ unsigned int loadTexture(const char* path, bool flipVertically) {
 		glBindTexture(GL_TEXTURE_2D, textureID);
 		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	}
@@ -272,15 +280,15 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
 void mouseCallback(GLFWwindow* window, double xPos, double yPos) {
 	float xPosition = static_cast<float>(xPos);
 	float yPosition = static_cast<float>(yPos);
-	if (firstMouse) {
-		lastX = xPosition;
-		lastY = yPosition;
-		firstMouse = false;
+	if (isFirstMouse) {
+		lastMouseX = xPosition;
+		lastMouseY = yPosition;
+		isFirstMouse = false;
 	}
-	float xOffset = xPosition - lastX;
-	float yOffset = lastY - yPosition; // reversed since y-coordinates range from top to bottom
-	lastX = xPosition;
-	lastY = yPosition;
+	float xOffset = xPosition - lastMouseX;
+	float yOffset = lastMouseY - yPosition; // reversed since y-coordinates range from top to bottom
+	lastMouseX = xPosition;
+	lastMouseY = yPosition;
 	camera.processMouseMovement(xOffset, yOffset);
 }
 
@@ -289,14 +297,17 @@ void scrollCallback(GLFWwindow* window, double xOffset, double yOffset) {
 }
 
 void processInput(GLFWwindow* window) {
+	// window close / exit program
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
+
+	// camera movement
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 		camera.processKeyboard(CameraMovement::FORWARD, deltaTime);
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		camera.processKeyboard(CameraMovement::BACKWARD, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
 		camera.processKeyboard(CameraMovement::LEFT, deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		camera.processKeyboard(CameraMovement::BACKWARD, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		camera.processKeyboard(CameraMovement::RIGHT, deltaTime);
 }
